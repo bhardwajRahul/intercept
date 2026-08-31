@@ -11,6 +11,7 @@ const Settings = {
         'offline.tile_provider': 'cartodb_dark_cyan',
         'offline.tile_server_url': '',
         'offline.stadia_key': '',
+        'offline.carto_key': '',
     },
 
     // Tile provider configurations
@@ -25,19 +26,22 @@ const Settings = {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
             subdomains: 'abcd',
             mapTheme: 'cyber',
-            options: {}
+            options: {},
+            supportsKey: true
         },
         cartodb_dark_cyan: {
             url: 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png',
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
             subdomains: 'abcd',
             mapTheme: 'cyber',
-            options: {}
+            options: {},
+            supportsKey: true
         },
         cartodb_light: {
             url: 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-            subdomains: 'abcd'
+            subdomains: 'abcd',
+            supportsKey: true
         },
         esri_world: {
             url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -227,7 +231,7 @@ const Settings = {
         this._cache[key] = value;
 
         // Save to localStorage as backup (exclude sensitive keys)
-        const SENSITIVE_KEYS = ['offline.stadia_key'];
+        const SENSITIVE_KEYS = ['offline.stadia_key', 'offline.carto_key'];
         const toStore = Object.fromEntries(
             Object.entries(this._cache).filter(([k]) => !SENSITIVE_KEYS.includes(k))
         );
@@ -316,6 +320,13 @@ const Settings = {
                 (provider === 'stadia_dark' || provider === 'tactical') ? 'block' : 'none';
         }
 
+        // Show/hide CARTO API key row
+        const cartoKeyRow = document.getElementById('cartoKeyRow');
+        if (cartoKeyRow) {
+            cartoKeyRow.style.display =
+                (this.tileProviders[provider] && this.tileProviders[provider].supportsKey) ? 'block' : 'none';
+        }
+
         // Update tiles immediately for all providers.
         this._updateMapTiles();
         const activeConfig = this.getTileConfig();
@@ -337,6 +348,16 @@ const Settings = {
      */
     async setStadiaKey(key) {
         await this._save('offline.stadia_key', (key || '').trim());
+        this._updateMapTiles();
+    },
+
+    /**
+     * Save CARTO API key and refresh tiles. CartoDB tiles work without a key
+     * but CARTO now watermarks unauthenticated raster tile requests.
+     * @param {string} key
+     */
+    async setCartoKey(key) {
+        await this._save('offline.carto_key', (key || '').trim());
         this._updateMapTiles();
     },
 
@@ -369,12 +390,22 @@ const Settings = {
             };
         }
 
-        // Robust fallback: keep Cyber theme when CartoDB dark is active and Cyber preferred.
-        if (provider === 'cartodb_dark' && this._getMapThemePreference() === 'cyber') {
-            return { ...baseConfig, mapTheme: 'cyber' };
+        let resolvedConfig = baseConfig;
+        if (baseConfig.supportsKey) {
+            // CartoDB raster tiles work without a key but CARTO now watermarks
+            // unauthenticated requests; a free key (carto.com/basemaps/apikey) removes it.
+            const cartoKey = (this.get('offline.carto_key') || '').trim();
+            if (cartoKey) {
+                resolvedConfig = { ...baseConfig, url: baseConfig.url + '?key=' + encodeURIComponent(cartoKey) };
+            }
         }
 
-        return baseConfig;
+        // Robust fallback: keep Cyber theme when CartoDB dark is active and Cyber preferred.
+        if (provider === 'cartodb_dark' && this._getMapThemePreference() === 'cyber') {
+            return { ...resolvedConfig, mapTheme: 'cyber' };
+        }
+
+        return resolvedConfig;
     },
 
     /**
@@ -697,6 +728,18 @@ const Settings = {
             const currentProvider = this.get('offline.tile_provider');
             stadiaKeyRow.style.display =
                 (currentProvider === 'stadia_dark' || currentProvider === 'tactical') ? 'block' : 'none';
+        }
+
+        // CARTO API key input
+        const cartoKeyInput = document.getElementById('cartoKeyInput');
+        if (cartoKeyInput) {
+            cartoKeyInput.value = this.get('offline.carto_key') || '';
+        }
+        const cartoKeyRow = document.getElementById('cartoKeyRow');
+        if (cartoKeyRow) {
+            const currentProvider = this.get('offline.tile_provider');
+            cartoKeyRow.style.display =
+                (this.tileProviders[currentProvider] && this.tileProviders[currentProvider].supportsKey) ? 'block' : 'none';
         }
 
         // Theme select

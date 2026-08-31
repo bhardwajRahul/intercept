@@ -114,13 +114,17 @@ const Meshtastic = (function() {
         meshMap = L.map('meshMap').setView([defaultLat, defaultLon], 4);
         window.meshMap = meshMap;
 
-        // Add fallback tiles immediately so the map is visible instantly
-        const fallbackTiles = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-            maxZoom: 19,
-            subdomains: 'abcd',
-            className: 'tile-layer-cyan'
-        }).addTo(meshMap);
+        // Add fallback tiles immediately so the map is visible instantly. If Settings
+        // already loaded elsewhere this session, use it directly instead — avoids a
+        // flash of the unkeyed CartoDB URL when a CARTO API key has been configured.
+        const fallbackTiles = (typeof Settings !== 'undefined' && Settings._initialized && Settings.createTileLayer)
+            ? Settings.createTileLayer().addTo(meshMap)
+            : L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+                maxZoom: 19,
+                subdomains: 'abcd',
+                className: 'tile-layer-cyan'
+            }).addTo(meshMap);
 
         // Upgrade tiles in background via Settings (with timeout fallback)
         if (typeof Settings !== 'undefined') {

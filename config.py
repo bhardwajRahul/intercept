@@ -7,10 +7,18 @@ import os
 import sys
 
 # Application version
-VERSION = "2.32.0"
+VERSION = "2.33.0"
 
 # Changelog - latest release notes (shown on welcome screen)
 CHANGELOG = [
+    {
+        "version": "2.33.0",
+        "date": "August 2026",
+        "highlights": [
+            "Feat: CARTO API key setting (Settings > Map Tiles) removes the new watermark CARTO adds to unauthenticated tile requests — free key, no account needed",
+            "Fix: mode maps (Drone, SSTV, MeshCore, Meshtastic, WebSDR, Weather Satellite) no longer briefly flash unkeyed CartoDB tiles when Settings is already loaded",
+        ],
+    },
     {
         "version": "2.32.0",
         "date": "July 2026",

@@ -220,11 +220,15 @@ const SSTV = (function() {
         });
         window.issMap = issMap;
 
-        // Add fallback tiles immediately so the map is visible instantly
-        const fallbackTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 19,
-            className: 'tile-layer-cyan'
-        }).addTo(issMap);
+        // Add fallback tiles immediately so the map is visible instantly. If Settings
+        // already loaded elsewhere this session, use it directly instead — avoids a
+        // flash of the unkeyed CartoDB URL when a CARTO API key has been configured.
+        const fallbackTiles = (typeof Settings !== 'undefined' && Settings._initialized && Settings.createTileLayer)
+            ? Settings.createTileLayer().addTo(issMap)
+            : L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                maxZoom: 19,
+                className: 'tile-layer-cyan'
+            }).addTo(issMap);
 
         // Upgrade tiles in background via Settings (with timeout fallback)
         if (typeof Settings !== 'undefined') {

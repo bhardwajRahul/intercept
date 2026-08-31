@@ -41,15 +41,33 @@ var DroneMode = (function () {
         var mapEl = document.getElementById('droneMainMap');
         if (!mapEl || typeof L === 'undefined') return;
         _map = L.map('droneMainMap', { zoomControl: true }).setView([20, 0], 2);
-        if (typeof Settings !== 'undefined' && Settings.createTileLayer) {
+
+        var hasSettings = typeof Settings !== 'undefined' && Settings.createTileLayer;
+        if (hasSettings && Settings._initialized) {
+            // Settings already loaded elsewhere this session — use it directly so a
+            // configured CARTO API key is applied immediately (no unkeyed flash).
             Settings.createTileLayer().addTo(_map);
             Settings.registerMap(_map);
         } else {
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            var fallbackTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
                 maxZoom: 19,
             }).addTo(_map);
+
+            if (hasSettings) {
+                Promise.race([
+                    Settings.init(),
+                    new Promise(function (_, reject) { setTimeout(function () { reject(new Error('Settings timeout')); }, 5000); })
+                ]).then(function () {
+                    _map.removeLayer(fallbackTiles);
+                    Settings.createTileLayer().addTo(_map);
+                    Settings.registerMap(_map);
+                }).catch(function (e) {
+                    console.warn('Drone: Settings init failed/timed out, using fallback tiles:', e);
+                });
+            }
         }
+
         if (typeof MapUtils !== 'undefined') MapUtils.addGraticuleControl(_map);
     }
 

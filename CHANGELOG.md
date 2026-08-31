@@ -2,6 +2,14 @@
 
 All notable changes to iNTERCEPT will be documented in this file.
 
+## [2.33.0] - 2026-08-31
+
+### Added
+- **CARTO API key setting** — CARTO now watermarks raster tile requests that don't include an API key. Settings > Map Tiles has a new CARTO API Key field (shown whenever a CartoDB provider is selected) that appends a free key (no account needed, from carto.com/basemaps/apikey) to tile requests to remove the watermark.
+
+### Fixed
+- **CartoDB watermark flash on mode maps** — Drone, SSTV/ISS, MeshCore, Meshtastic, WebSDR, and Weather Satellite maps painted an instant, hardcoded, unkeyed CartoDB tile layer before upgrading to the configured provider. If Settings was already initialized elsewhere in the session, they now use the real configured (and potentially keyed) tile layer immediately instead.
+
 ## [2.32.0] - 2026-07-07
 
 ### Added

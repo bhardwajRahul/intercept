@@ -101,6 +101,20 @@
                                onchange="Settings.setStadiaKey(this.value)">
                     </div>
                 </div>
+                <div class="settings-row" id="cartoKeyRow" style="display: none;">
+                    <div class="settings-label" style="width: 100%;">
+                        <span class="settings-label-text">CARTO API Key</span>
+                        <span class="settings-label-desc">
+                            CARTO now watermarks map tiles without a key. Get a free key in about a
+                            minute (no account needed) at
+                            <a href="https://carto.com/basemaps/apikey/" target="_blank" style="color: var(--accent-cyan);">carto.com/basemaps/apikey</a>,
+                            then paste it below.
+                        </span>
+                        <input type="text" id="cartoKeyInput" class="settings-input"
+                               placeholder="your-api-key-here"
+                               onchange="Settings.setCartoKey(this.value)">
+                    </div>
+                </div>
             </div>
 
             <div class="settings-group">

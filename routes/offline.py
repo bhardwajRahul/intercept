@@ -20,6 +20,7 @@ OFFLINE_DEFAULTS = {
     "offline.tile_provider": "cartodb_dark_cyan",
     "offline.tile_server_url": "",
     "offline.stadia_key": "",
+    "offline.carto_key": "",
 }
 
 # Asset paths to check

@@ -320,13 +320,17 @@ async function initWebsdrLeaflet(mapEl) {
         maxBoundsViscosity: 1.0,
     });
 
-    // Add fallback tiles immediately so the map is visible instantly
-    const fallbackTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-        subdomains: 'abcd',
-        maxZoom: 19,
-        className: 'tile-layer-cyan',
-    }).addTo(websdrMap);
+    // Add fallback tiles immediately so the map is visible instantly. If Settings
+    // already loaded elsewhere this session, use it directly instead — avoids a
+    // flash of the unkeyed CartoDB URL when a CARTO API key has been configured.
+    const fallbackTiles = (typeof Settings !== 'undefined' && Settings._initialized && Settings.createTileLayer)
+        ? Settings.createTileLayer().addTo(websdrMap)
+        : L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            subdomains: 'abcd',
+            maxZoom: 19,
+            className: 'tile-layer-cyan',
+        }).addTo(websdrMap);
 
     // Upgrade tiles in background via Settings (with timeout fallback)
     if (typeof Settings !== 'undefined' && Settings.createTileLayer) {

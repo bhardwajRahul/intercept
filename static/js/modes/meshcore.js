@@ -327,10 +327,14 @@ const MeshCore = (function () {
         if (!container || _map) return;
         _map = L.map('meshcoreMap', { zoomControl: true }).setView([20, 0], 2);
 
-        const fallback = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', {
-            attribution: '© CartoDB',
-            maxZoom: 19,
-        }).addTo(_map);
+        // If Settings already loaded elsewhere this session, use it directly instead —
+        // avoids a flash of the unkeyed CartoDB URL when a CARTO API key is configured.
+        const fallback = (typeof Settings !== 'undefined' && Settings._initialized && Settings.createTileLayer)
+            ? Settings.createTileLayer().addTo(_map)
+            : L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', {
+                attribution: '© CartoDB',
+                maxZoom: 19,
+            }).addTo(_map);
 
         if (typeof Settings !== 'undefined') {
             Promise.race([
